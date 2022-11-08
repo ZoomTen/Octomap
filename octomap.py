@@ -1177,22 +1177,22 @@ class MapPalette(Frame):
 		self.max_x = None
 		self.max_y = None
 		
-		#ma_hbar = Scrollbar(
-		#	self,
-		#	orient=HORIZONTAL,
-		#	command=self.map_area.xview
-		#)
+		ma_hbar = Scrollbar(
+			self,
+			orient=HORIZONTAL,
+			command=self.map_area.xview
+		)
 		ma_vbar = Scrollbar(
 			self,
 			orient=VERTICAL,
 			command=self.map_area.yview
 		)
 		
-		#ma_hbar.grid(row=2,column=1,sticky="ew")
+		ma_hbar.grid(row=2,column=1,sticky="ew")
 		ma_vbar.grid(row=1,column=2,sticky="ns")
 		
 		self.map_area.config(
-		#	xscrollcommand=ma_hbar.set,
+			xscrollcommand=ma_hbar.set,
 			yscrollcommand=ma_vbar.set,
 		)
 		
