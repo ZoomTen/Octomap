@@ -123,6 +123,35 @@ event2canvas_coord = lambda x: int(x*8*2*AppState.scale_factor)
 
 #################################################################################################
 
+# https://blog.teclado.com/tkinter-scrollable-frames/
+class ScrollableFrame(Frame):
+	'''
+	Scrollable Frames in Tkinter
+	
+	by Jose Salvatierra, 10 Oct. 2019
+	'''
+	def __init__(self, container, *args, **kwargs):
+		super().__init__(container)
+		canvas = Canvas(self, *args, **kwargs)
+		scrollbar = Scrollbar(self, orient="vertical", command=canvas.yview)
+		self.frame = Frame(canvas)
+
+		self.frame.bind(
+			"<Configure>",
+			lambda e: canvas.configure(
+				scrollregion=canvas.bbox("all")
+			)
+		)
+
+		canvas.create_window((0, 0), window=self.frame, anchor="nw")
+
+		canvas.configure(yscrollcommand=scrollbar.set)
+
+		canvas.pack(side="left", fill="both", expand=True)
+		scrollbar.pack(side="right", fill="y")
+
+#################################################################################################
+
 # https://stackoverflow.com/a/41080067
 class CanvasTooltip:
 	'''
@@ -322,7 +351,7 @@ class App(Tk):
 		self.sbar = Label(self, anchor='w', justify="left", textvariable=self.status, relief=SUNKEN)
 		
 		# button container
-		frm_buttons = Frame(self)
+		frm_buttons = ScrollableFrame(self, width=112)
 		
 		# set styles
 		s = Style()
@@ -353,12 +382,12 @@ class App(Tk):
 		self.frm_map_area = MapView(self)
 		self.frm_map_palette = MapPalette(self)
 		self.sbar.pack(side=BOTTOM, fill=X, padx=5, pady=5)
-		frm_buttons.pack(side=LEFT, fill=Y)
-		self.frm_map_area.pack(side=LEFT, fill=BOTH,expand=1)
+		frm_buttons.pack(side=LEFT, fill=Y, padx=5)
+		self.frm_map_area.pack(side=LEFT, fill=BOTH, expand=1)
 		self.frm_map_palette.pack(side=LEFT, fill=Y, padx=5)
 		
 		# compose LHS buttons menu
-		lbl_block = Labelframe(frm_buttons, text="Blocks")
+		lbl_block = Labelframe(frm_buttons.frame, text="Blocks")
 		btn_open_block = Button(lbl_block, text="Open", command=self.open_block)
 		btn_reload_block = Button(lbl_block, text="Reload", command=self.reload_blocks)
 		btn_save_block = Button(lbl_block, text="Save As", command=self.save_block_as)
@@ -368,19 +397,19 @@ class App(Tk):
 		btn_reload_block.grid(row=2, column=0, sticky="ew", padx=5, pady=5)
 		btn_save_block.grid(row=3, column=0, sticky="ew", padx=5, pady=5)
 		
-		lbl_metatiles = Labelframe(frm_buttons, text="Metatiles")
+		lbl_metatiles = Labelframe(frm_buttons.frame, text="Metatiles")
 		btn_open_metatiles = Button(lbl_metatiles, text="Open", command=self.open_meta)
 		
 		lbl_metatiles.grid(row=4, column=0, sticky="ew", padx=5, pady=5)
 		btn_open_metatiles.grid(row=5, column=0, sticky="ew", padx=5, pady=5)
 		
-		lbl_tiles = Labelframe(frm_buttons, text="GFX")
+		lbl_tiles = Labelframe(frm_buttons.frame, text="GFX")
 		btn_open_tiles = Button(lbl_tiles, text="Open", command=self.open_tile)
 		
 		lbl_tiles.grid(row=6, column=0, sticky="ew", padx=5, pady=5)
 		btn_open_tiles.grid(row=7, column=0, sticky="ew", padx=5, pady=5)
 		
-		lbl_events = Labelframe(frm_buttons, text="Events")
+		lbl_events = Labelframe(frm_buttons.frame, text="Events")
 		btn_open_events = Button(lbl_events, text="Open", command=self.open_event)
 		btn_look_events = Button(lbl_events, text="See Code", command=self.see_code)
 		btn_reload_events = Button(lbl_events, text="Reload", command=self.reload_events)
@@ -392,8 +421,9 @@ class App(Tk):
 		btn_look_events.grid(row=11, column=0, sticky="ew", padx=5, pady=5)
 		btn_editor_events.grid(row=12, column=0, sticky="ew", padx=5, pady=5)
 		
-		lbl_edit = Label(frm_buttons, text="")
-		btn_update = Button(frm_buttons, text="Reload All", command=self.update_all)
+		lbl_edit = Label(frm_buttons.frame, text="")
+		btn_update = Button(frm_buttons.frame, text="Reload All", command=self.update_all)
+		
 		lbl_edit.grid(row=13, column=0, sticky="ew", padx=5, pady=5)
 		btn_update.grid(row=15, column=0, sticky="ew", padx=5, pady=5)
 		
