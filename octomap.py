@@ -322,6 +322,7 @@ class App(Tk):
 			AppState.loaded_events[event_type].append(
 				["0", "0", "", 1, False]
 			)
+			self.frm_map_area.status.set("new %s event added at (0, 0)" % event_type)
 			self.frm_map_area.update_events()
 		
 		add_menu = Menu(edit_menu, tearoff=0)
