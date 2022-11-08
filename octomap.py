@@ -313,7 +313,7 @@ class App(Tk):
 		file_menu.add_command(label="Exit", command=sys.exit)
 		menu_bar.add_cascade(label="File",menu=file_menu)
 		
-		edit_menu = Menu(menu_bar, tearoff=0)
+		self.edit_menu = Menu(menu_bar, tearoff=0)
 		#edit_menu.add_command(label="Undo [TODO]", accelerator="Ctrl+Z")
 		#edit_menu.add_command(label="Redo [TODO]", accelerator="Ctrl+Y")
 		
@@ -325,16 +325,16 @@ class App(Tk):
 			self.frm_map_area.status.set("new %s event added at (0, 0)" % event_type)
 			self.frm_map_area.update_events()
 		
-		add_menu = Menu(edit_menu, tearoff=0)
+		add_menu = Menu(self.edit_menu, tearoff=0)
 		add_menu.add_command(label="Background event", command=lambda:add_new_event("bg"))
 		add_menu.add_command(label="Object event", command=lambda:add_new_event("event"))
 		add_menu.add_command(label="Coordinate event", command=lambda:add_new_event("coord"))
 		add_menu.add_command(label="Warp", command=lambda:add_new_event("warp"))
-		edit_menu.add_cascade(label="Add new...",menu=add_menu)
+		self.edit_menu.add_cascade(label="Add new...",menu=add_menu, state="disabled")
 		
-		edit_menu.add_separator()
-		edit_menu.add_command(label="Preferences", command=self.open_preferences)
-		menu_bar.add_cascade(label="Edit",menu=edit_menu)
+		self.edit_menu.add_separator()
+		self.edit_menu.add_command(label="Preferences", command=self.open_preferences)
+		menu_bar.add_cascade(label="Edit",menu=self.edit_menu)
 		
 		help_menu = Menu(menu_bar, tearoff=0)
 		help_menu.add_command(label="Short guide", command=self.help_screen, accelerator="Ctrl+H")
@@ -390,13 +390,13 @@ class App(Tk):
 		# compose LHS buttons menu
 		lbl_block = Labelframe(frm_buttons.frame, text="Blocks")
 		btn_open_block = Button(lbl_block, text="Open", command=self.open_block)
-		btn_reload_block = Button(lbl_block, text="Reload", command=self.reload_blocks)
-		btn_save_block = Button(lbl_block, text="Save As", command=self.save_block_as)
+		self.btn_reload_block = Button(lbl_block, text="Reload", command=self.reload_blocks, state="disabled")
+		self.btn_save_block = Button(lbl_block, text="Save As", command=self.save_block_as, state="disabled")
 		
 		lbl_block.grid(row=0, column=0, sticky="ew", padx=5, pady=5)
 		btn_open_block.grid(row=1, column=0, sticky="ew", padx=5, pady=5)
-		btn_reload_block.grid(row=2, column=0, sticky="ew", padx=5, pady=5)
-		btn_save_block.grid(row=3, column=0, sticky="ew", padx=5, pady=5)
+		self.btn_reload_block.grid(row=2, column=0, sticky="ew", padx=5, pady=5)
+		self.btn_save_block.grid(row=3, column=0, sticky="ew", padx=5, pady=5)
 		
 		lbl_metatiles = Labelframe(frm_buttons.frame, text="Metatiles")
 		btn_open_metatiles = Button(lbl_metatiles, text="Open", command=self.open_meta)
@@ -412,15 +412,15 @@ class App(Tk):
 		
 		lbl_events = Labelframe(frm_buttons.frame, text="Events")
 		btn_open_events = Button(lbl_events, text="Open", command=self.open_event)
-		btn_look_events = Button(lbl_events, text="See Code", command=self.see_code)
-		btn_reload_events = Button(lbl_events, text="Reload", command=self.reload_events)
-		btn_editor_events = Button(lbl_events, text="Open in Editor", command=self.editor_events)
+		self.btn_look_events = Button(lbl_events, text="See Code", command=self.see_code, state="disabled")
+		self.btn_reload_events = Button(lbl_events, text="Reload", command=self.reload_events, state="disabled")
+		self.btn_editor_events = Button(lbl_events, text="Open in Editor", command=self.editor_events, state="disabled")
 		
 		lbl_events.grid(row=8, column=0, sticky="ew", padx=5, pady=5)
 		btn_open_events.grid(row=9, column=0, sticky="ew", padx=5, pady=5)
-		btn_reload_events.grid(row=10, column=0, sticky="ew", padx=5, pady=5)
-		btn_look_events.grid(row=11, column=0, sticky="ew", padx=5, pady=5)
-		btn_editor_events.grid(row=12, column=0, sticky="ew", padx=5, pady=5)
+		self.btn_reload_events.grid(row=10, column=0, sticky="ew", padx=5, pady=5)
+		self.btn_look_events.grid(row=11, column=0, sticky="ew", padx=5, pady=5)
+		self.btn_editor_events.grid(row=12, column=0, sticky="ew", padx=5, pady=5)
 		
 		lbl_edit = Label(frm_buttons.frame, text="")
 		btn_update = Button(frm_buttons.frame, text="Reload All", command=self.update_all)
@@ -716,22 +716,29 @@ support Sublime Text-styled command line syntax)
 	
 	def check_params(self):
 		self.status_message = "Everything seems OK, click on 'Reload All' to load full map"
-		if not AppState.loaded_block_file:
-			self.status_message = "No block file loaded"
-			self.update_status()
-			return False
-		if not AppState.loaded_metatile_file:
-			self.status_message = "No metatile file loaded"
-			self.update_status()
-			return False
-		if not AppState.loaded_tile_file:
-			self.status_message = "No tileset file loaded"
-			self.update_status()
-			return False
+		
 		if not AppState.loaded_event_file:
 			self.status_message = "No event file loaded"
 			self.update_status()
 			return False
+		
+		self.btn_editor_events.config(state="normal")
+		
+		if not AppState.loaded_block_file:
+			self.status_message = "No block file loaded"
+			self.update_status()
+			return False
+		
+		if not AppState.loaded_metatile_file:
+			self.status_message = "No metatile file loaded"
+			self.update_status()
+			return False
+		
+		if not AppState.loaded_tile_file:
+			self.status_message = "No tileset file loaded"
+			self.update_status()
+			return False
+		
 		self.update_status()
 		return True
 		
@@ -748,6 +755,11 @@ support Sublime Text-styled command line syntax)
 		AppState.validate_events()
 		self.frm_map_palette.update_palette()
 		self.frm_map_area.update_map()
+		self.edit_menu.entryconfig("Add new...", state="normal")
+		self.btn_reload_block.config(state="normal")
+		self.btn_reload_events.config(state="normal")
+		self.btn_save_block.config(state="normal")
+		self.btn_look_events.config(state="normal")
 	
 	def update_status(self):
 		self.status.set("Blocks: %s (%dx%d),\nMetatiles: %s,\nTiles: %s,\nEvents: %s\n----\n%s" % (
