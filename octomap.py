@@ -627,13 +627,16 @@ Right click on a map's tile to "eyedrop" it.
 
 Click and drag an event (colored squares) to move it around.
 Right-click the event to show options.
-Double-click the event to edit it with your preferred editor
-	(set in Edit->Preferences)
+Double-click the event to edit it here.
 Hover over the event to quickly view what properties are in it.
 
 Left click on the righthand side menu to select a metatile from
 the list. The status bar will let you know which metatile you're hovering
 above as well as the currently selected metatile.
+
+You can open an event in an external text editor, which should
+jump to the line it's in (set it in Edit->Preferences; it should
+support Sublime Text-styled command line syntax)
 """)
 
 	def open_block(self):
@@ -1329,7 +1332,7 @@ class MapView(Frame):
 			self.map_area.tag_bind(event_type, "<ButtonPress-1>", self.drag_event_start)
 			self.map_area.tag_bind(event_type, "<ButtonRelease-1>", self.drag_event_end)
 			self.map_area.tag_bind(event_type, "<ButtonPress-3>", self.show_event_menu) # right click
-			self.map_area.tag_bind(event_type, "<Double-Button-1>", self.edit_event_in_editor_from_menu)
+			self.map_area.tag_bind(event_type, "<Double-Button-1>", self.edit_event_here_from_menu)
 		
 		# register block bindings
 		self.map_area.tag_bind("block", "<ButtonPress-3>", self.block_eyedrop)
@@ -1493,6 +1496,12 @@ class MapView(Frame):
 		object = self.map_area.find_closest(raw_x, raw_y)[0] 
 		tags = self.map_area.gettags(object)
 		return self.edit_event_in_editor(tags)()
+	
+	def edit_event_here_from_menu(self, event):
+		raw_x, raw_y = self.calculate_viewport_location(event.x, event.y)
+		object = self.map_area.find_closest(raw_x, raw_y)[0] 
+		tags = self.map_area.gettags(object)
+		return self.edit_event_here(tags)()
 	
 	def edit_event_here(self, tags):
 		def _():
