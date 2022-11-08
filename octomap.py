@@ -1672,7 +1672,7 @@ class EditEventDialog(Toplevel):
 		
 		self.frm_main = Frame(self)
 		self.lbl_event_code = Label(self.frm_main)
-		self.lbl_event_code.configure(anchor="e", text='Event code')
+		self.lbl_event_code.configure(anchor="w", text='Event code')
 		self.lbl_event_code.grid(column=0, padx=4, pady=4, row=0, sticky="ew")
 		self.visible_checkbox = Checkbutton(self.frm_main)
 		self.event_is_visible = BooleanVar(
@@ -1680,17 +1680,18 @@ class EditEventDialog(Toplevel):
 		)
 		self.visible_checkbox.configure(
 			text='Make visible',
-			variable=self.event_is_visible)
+			variable=self.event_is_visible
+		)
 		self.visible_checkbox.grid(
-			column=0, columnspan=3, padx=4, pady=4, row=1)
+			column=0, columnspan=3, padx=4, pady=4, row=2)
 		self.event_code = ScrolledText(self.frm_main)
 		self.event_code.configure(height=3, width=50)
 		self.event_code.grid(
-			column=1,
+			column=0,
 			columnspan=2,
 			padx=4,
 			pady=4,
-			row=0,
+			row=1,
 			sticky="ew")
 		self.button_holder = Frame(self.frm_main)
 		
