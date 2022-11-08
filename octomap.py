@@ -337,14 +337,16 @@ class App(Tk):
 		# add pointless logo
 		if __DISPLAY_POINTLESS_BITMAPS__:
 			frm_pointless_logo = Frame(self, style="PointlessLogo.TFrame")
+			frm_pointless_logo_centering = Frame(frm_pointless_logo)
 			self.logo = PhotoImage(file=os.path.join(
 				os.path.realpath(os.path.dirname(__file__)),
 				"octomap_header.png"
 			))
 			s.configure("PointlessLogo.TFrame", background="black", padding=0)
 			s.configure("PointlessLogo.TLabel", background="black")
-			lbl_logo = Label(frm_pointless_logo, image=self.logo, style="PointlessLogo.TLabel")
-			lbl_logo.pack(side=LEFT)
+			lbl_logo = Label(frm_pointless_logo_centering, image=self.logo, style="PointlessLogo.TLabel")
+			lbl_logo.grid(row=0, column=0, sticky="ew")
+			frm_pointless_logo_centering.pack(side=TOP, fill=Y)
 			frm_pointless_logo.pack(side=TOP, fill=X)
 		
 		# compose the UI
@@ -743,7 +745,7 @@ class AboutScreen(Toplevel):
 		self.resizable(False, False)
 		
 		s = Style()
-		s.configure("AboutScreen.TLabel", padding=8)
+		s.configure("AboutScreen.TLabel", padding=2)
 		
 		if __DISPLAY_POINTLESS_BITMAPS__:
 			self.image = PhotoImage(file=os.path.join(
