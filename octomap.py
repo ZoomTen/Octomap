@@ -894,6 +894,9 @@ class PreferencesScreen(Toplevel):
 		
 		self.scale_factor = IntVar()
 		self.scale_factor.set(AppState.scale_factor)
+		
+		self.old_scale_factor = AppState.scale_factor
+		
 		lbl_scale_factor = Label(frame, text="Scale factor", anchor="e")
 		sbx_scale_factor = Spinbox(frame, from_=1, to=30, width=56, textvariable=self.scale_factor)
 		lbl_scale_factor.grid(column=0, row=2, pady=8, padx=4, sticky="we")
@@ -928,6 +931,9 @@ class PreferencesScreen(Toplevel):
 		# reflect on live app
 		AppState.text_editor = self.text_editor.get()
 		AppState.scale_factor = int(self.scale_factor.get())
+		
+		if self.old_scale_factor != AppState.scale_factor:
+			showinfo("Warning", "Scale factor is changed, click on Reload All\nto apply the new scaling.")
 		
 		with open (__CONFIG__, "w") as octomap_cfg:
 			cfg.write(octomap_cfg)
