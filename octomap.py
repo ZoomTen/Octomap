@@ -377,7 +377,7 @@ class App(Tk):
 		self.sbar = Label(self, anchor='w', justify="left", textvariable=self.status, relief=SUNKEN)
 		
 		# button container
-		frm_buttons = ScrollableFrame(self, width=112)
+		frm_buttons = ScrollableFrame(self, width=120)
 		
 		# set styles
 		s = Style()
@@ -388,6 +388,14 @@ class App(Tk):
 		else:
 			# set theme outside windows
 			s.theme_use("clam")
+		
+		self.icons = {
+			"open": None,
+			"refresh": None,
+			"save": None,
+			"info": None,
+			"code": None,
+		}
 		
 		# add pointless logo
 		if __DISPLAY_POINTLESS_BITMAPS__:
@@ -400,6 +408,9 @@ class App(Tk):
 			lbl_logo.grid(row=0, column=0, sticky="ew")
 			frm_pointless_logo_centering.pack(side=TOP, fill=Y)
 			frm_pointless_logo.pack(side=TOP, fill=X)
+			
+			for i in self.icons:
+				self.icons[i] = PhotoImage(file=get_relative_to_script(["resources", "%s.png" % i]))
 		
 		# compose the UI
 		self.frm_map_area = MapView(self)
@@ -411,44 +422,44 @@ class App(Tk):
 		
 		# compose LHS buttons menu
 		lbl_block = Labelframe(frm_buttons.frame, text="Blocks")
-		btn_open_block = Button(lbl_block, text="Open", command=self.open_block)
-		self.btn_reload_block = Button(lbl_block, text="Reload", command=self.reload_blocks, state="disabled")
-		self.btn_save_block = Button(lbl_block, text="Save As", command=self.save_block_as, state="disabled")
+		btn_open_block = Button(lbl_block, text="Open", image=self.icons["open"], compound="left", command=self.open_block)
+		self.btn_reload_block = Button(lbl_block, text="Reload", image=self.icons["refresh"], compound="left", command=self.reload_blocks, state="disabled")
+		self.btn_save_block = Button(lbl_block, text="Save As", image=self.icons["save"], compound="left", command=self.save_block_as, state="disabled")
 		
 		lbl_block.grid(row=0, column=0, sticky="ew", padx=5, pady=5)
-		btn_open_block.grid(row=1, column=0, sticky="ew", padx=5, pady=5)
-		self.btn_reload_block.grid(row=2, column=0, sticky="ew", padx=5, pady=5)
-		self.btn_save_block.grid(row=3, column=0, sticky="ew", padx=5, pady=5)
+		btn_open_block.grid(row=1, column=0, sticky="ew", padx=0, pady=5)
+		self.btn_reload_block.grid(row=2, column=0, sticky="ew", padx=0, pady=5)
+		self.btn_save_block.grid(row=3, column=0, sticky="ew", padx=0, pady=5)
 		
 		lbl_metatiles = Labelframe(frm_buttons.frame, text="Metatiles")
-		btn_open_metatiles = Button(lbl_metatiles, text="Open", command=self.open_meta)
+		btn_open_metatiles = Button(lbl_metatiles, text="Open", image=self.icons["open"], compound="left", command=self.open_meta)
 		
 		lbl_metatiles.grid(row=4, column=0, sticky="ew", padx=5, pady=5)
-		btn_open_metatiles.grid(row=5, column=0, sticky="ew", padx=5, pady=5)
+		btn_open_metatiles.grid(row=5, column=0, sticky="ew", padx=0, pady=5)
 		
 		lbl_tiles = Labelframe(frm_buttons.frame, text="GFX")
-		btn_open_tiles = Button(lbl_tiles, text="Open", command=self.open_tile)
+		btn_open_tiles = Button(lbl_tiles, text="Open", image=self.icons["open"], compound="left",  command=self.open_tile)
 		
 		lbl_tiles.grid(row=6, column=0, sticky="ew", padx=5, pady=5)
-		btn_open_tiles.grid(row=7, column=0, sticky="ew", padx=5, pady=5)
+		btn_open_tiles.grid(row=7, column=0, sticky="ew", padx=0, pady=5)
 		
 		lbl_events = Labelframe(frm_buttons.frame, text="Events")
-		btn_open_events = Button(lbl_events, text="Open", command=self.open_event)
-		self.btn_look_events = Button(lbl_events, text="See Code", command=self.see_code, state="disabled")
-		self.btn_reload_events = Button(lbl_events, text="Reload", command=self.reload_events, state="disabled")
-		self.btn_editor_events = Button(lbl_events, text="Open in Editor", command=self.editor_events, state="disabled")
+		btn_open_events = Button(lbl_events, text="Open", image=self.icons["open"], compound="left",  command=self.open_event)
+		self.btn_look_events = Button(lbl_events, text="See Code", image=self.icons["info"], compound="left", command=self.see_code, state="disabled")
+		self.btn_reload_events = Button(lbl_events, text="Reload", image=self.icons["refresh"], compound="left", command=self.reload_events, state="disabled")
+		self.btn_editor_events = Button(lbl_events, text="Open in Editor", image=self.icons["code"], compound="left", command=self.editor_events, state="disabled")
 		
 		lbl_events.grid(row=8, column=0, sticky="ew", padx=5, pady=5)
-		btn_open_events.grid(row=9, column=0, sticky="ew", padx=5, pady=5)
-		self.btn_reload_events.grid(row=10, column=0, sticky="ew", padx=5, pady=5)
-		self.btn_look_events.grid(row=11, column=0, sticky="ew", padx=5, pady=5)
-		self.btn_editor_events.grid(row=12, column=0, sticky="ew", padx=5, pady=5)
+		btn_open_events.grid(row=9, column=0, sticky="ew", padx=0, pady=5)
+		self.btn_reload_events.grid(row=10, column=0, sticky="ew", padx=0, pady=5)
+		self.btn_look_events.grid(row=11, column=0, sticky="ew", padx=0, pady=5)
+		self.btn_editor_events.grid(row=12, column=0, sticky="ew", padx=0, pady=5)
 		
 		lbl_edit = Label(frm_buttons.frame, text="")
-		btn_update = Button(frm_buttons.frame, text="Reload All", command=self.update_all)
+		btn_update = Button(frm_buttons.frame, text="Reload All", image=self.icons["refresh"], compound="left", command=self.update_all)
 		
-		lbl_edit.grid(row=13, column=0, sticky="ew", padx=5, pady=5)
-		btn_update.grid(row=15, column=0, sticky="ew", padx=5, pady=5)
+		lbl_edit.grid(row=13, column=0, sticky="ew", padx=0, pady=5)
+		btn_update.grid(row=15, column=0, sticky="ew", padx=0, pady=5)
 		
 		self.check_params()
 		self.load_preference_config()
