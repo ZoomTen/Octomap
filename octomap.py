@@ -10,6 +10,7 @@ import os, sys
 import subprocess
 from pathlib import Path
 from configparser import ConfigParser
+from enum import Enum
 
 __VERSION__ = "0.0.3"
 
@@ -19,6 +20,25 @@ __CONFIG__ = os.path.join(
 	os.path.realpath(os.path.dirname(__file__)),
 	"octomap.ini"
 )
+
+class TextEditorType(Enum):
+	none = {
+		"number": 0,
+		"description": "Unsupported"
+	}
+	sublime = {
+		"number": 1,
+		"description": "Sublime-like (TextEditor.exe File.txt:25)"
+	}
+	notepadpp = {
+		"number": 2,
+		"description": "Notepad++-like (TextEditor.exe -n25 File.txt)"
+	}
+	vscode = {
+		"number": 3,
+		"description": "VSCode-like (TextEditor.exe -g File.txt:25)"
+	}
+	
 
 class AppState(object):
 	"""
@@ -48,9 +68,14 @@ class AppState(object):
 	}
 	loaded_event_file_is_new_styled = False
 	
+	# octomap settings
 	scale_factor = 1
-	
 	text_editor = "C:/Documents and Settings/Zumi/Desktop/Applications/xse/XTE/Build/XTE.exe"
+	# 0 = none
+	# 1 = sublime-like (includes Atom) 
+	# 2 = notepad++-like
+	# 3 = vscode-like
+	text_editor_type = 0
 
 	def validate_block_size():
 		with open(AppState.loaded_block_file, "rb") as blocks:
@@ -467,6 +492,14 @@ class App(Tk):
 			
 			if cfg_p.get("scale_factor", None):
 				AppState.scale_factor = int(cfg_p["scale_factor"])
+			
+			if cfg_p.get("editor_type", None):
+				i = int(cfg_p["editor_type"])
+				# handle invalid
+				if i not in [x.value["number"] for x in TextEditorType]:
+					AppState.text_editor_type = 0
+				else:
+					AppState.text_editor_type = i
 	
 	def load_settings_from_file(self, filepath):
 		cfg = ConfigParser()
@@ -877,20 +910,34 @@ class PreferencesScreen(Toplevel):
 		self.columnconfigure(1, weight=3)
 		self.grab_set()
 		
+		#TextEditorType
+		
 		frame = Frame(self, padding="10 10 12 12")
 		frame.grid(column=0, row=0, sticky="news")
+		
+		auto_row = 0
 		
 		self.text_editor = StringVar()
 		self.text_editor.set(AppState.text_editor)
 		lbl_editor = Label(frame, text="Text editor", anchor="e")
 		ety_editor = Entry(frame,textvariable=self.text_editor, width=56)
 		btn_load = Button(frame, text="Open\u2026", width=6, command=self.open_executable)
-		lbl_editor.grid(column=0, row=0, pady=8, padx=4, sticky="we")
-		ety_editor.grid(column=1, row=0, sticky="we", padx=4)
-		btn_load.grid(column=2, row=0, sticky="we")
+		lbl_editor.grid(column=0, row=auto_row, pady=8, padx=4, sticky="we")
+		ety_editor.grid(column=1, row=auto_row, sticky="we", padx=4)
+		btn_load.grid(column=2, row=auto_row, sticky="we")
 		
-		lbl_editor_tip = Label(frame, text="Preferably one that supports Sublime Text-styled command line arguments to instantly jump to a line in a file, e.g.:\n\nTextEditor.exe C:\\Users\\Me\\Desktop\\Thing.txt:25", anchor="w", wraplength=400)
-		lbl_editor_tip.grid(column=1, row=1, columnspan=2, sticky="we")
+		auto_row += 1
+		
+		lbl_editor_type = Label(frame, text="Instant line-jump command:", anchor="e")
+		lbl_editor_type.grid(column=0, row=auto_row, padx=4, sticky="we")
+		
+		self.editor_type = IntVar()
+		self.editor_type.set(AppState.text_editor_type)
+		
+		for edtype in TextEditorType:
+			rbt = Radiobutton(frame, text=edtype.value["description"], value=edtype.value["number"], variable=self.editor_type)
+			rbt.grid(column=1, row=auto_row, sticky="we", padx=4)
+			auto_row += 1
 		
 		self.scale_factor = IntVar()
 		self.scale_factor.set(AppState.scale_factor)
@@ -899,17 +946,21 @@ class PreferencesScreen(Toplevel):
 		
 		lbl_scale_factor = Label(frame, text="Scale factor", anchor="e")
 		sbx_scale_factor = Spinbox(frame, from_=1, to=30, width=56, textvariable=self.scale_factor)
-		lbl_scale_factor.grid(column=0, row=2, pady=8, padx=4, sticky="we")
-		sbx_scale_factor.grid(column=1, row=2, sticky="we", columnspan=2, padx=4)
+		lbl_scale_factor.grid(column=0, row=auto_row, pady=8, padx=4, sticky="we")
+		sbx_scale_factor.grid(column=1, row=auto_row, sticky="we", columnspan=2, padx=4)
+		
+		auto_row += 1
 		
 		sep = Separator(frame, orient="horizontal")
 		
-		sep.grid(column=0, row=3, columnspan=3, sticky="we", pady=4)
+		sep.grid(column=0, row=auto_row, columnspan=3, sticky="we", pady=4)
+		
+		auto_row += 1
 		
 		btn_cancel = Button(frame, text="Cancel", width=6, command=self.destroy)
 		btn_ok = Button(frame, text="OK", width=4, command=self.apply_settings)
-		btn_cancel.grid(column=1, row=4, sticky="e", padx=4)
-		btn_ok.grid(column=2, row=4, sticky="we")
+		btn_cancel.grid(column=1, row=auto_row, sticky="e", padx=4)
+		btn_ok.grid(column=2, row=auto_row, sticky="we")
 
 	def open_executable(self):
 		filepath = askopenfilename(
@@ -925,12 +976,14 @@ class PreferencesScreen(Toplevel):
 		# save to ini
 		cfg["Settings"] = {
 			"editor": self.text_editor.get(),
-			"scale_factor": self.scale_factor.get()
+			"scale_factor": self.scale_factor.get(),
+			"editor_type": self.editor_type.get()
 		}
 		
 		# reflect on live app
 		AppState.text_editor = self.text_editor.get()
 		AppState.scale_factor = int(self.scale_factor.get())
+		AppState.text_editor_type = int(self.editor_type.get())
 		
 		if self.old_scale_factor != AppState.scale_factor:
 			showinfo("Warning", "Scale factor is changed, click on Reload All\nto apply the new scaling.")
@@ -1531,10 +1584,29 @@ class MapView(Frame):
 	
 	def edit_event_in_editor(self, tags):
 		def _():
-			command = [
-				str(Path(AppState.text_editor).resolve()),
-				str(Path(AppState.loaded_event_file).resolve()) + (":%d" % AppState.loaded_events[tags[0]][int(tags[1])][3])
-			]
+			line_number = AppState.loaded_events[tags[0]][int(tags[1])][3]
+			if AppState.text_editor_type == TextEditorType.sublime.value["number"]:
+				command = [
+					str(Path(AppState.text_editor).resolve()),
+					str(Path(AppState.loaded_event_file).resolve()) + (":%d" % line_number)
+				]
+			elif AppState.text_editor_type == TextEditorType.notepadpp.value["number"]:
+				command = [
+					str(Path(AppState.text_editor).resolve()),
+					"-n%d" % line_number,
+					str(Path(AppState.loaded_event_file).resolve())
+				]
+			elif AppState.text_editor_type == TextEditorType.vscode.value["number"]:
+				command = [
+					str(Path(AppState.text_editor).resolve()),
+					"-g",
+					str(Path(AppState.loaded_event_file).resolve()) + (":%d" % line_number)
+				]
+			else:
+				command = [
+					str(Path(AppState.text_editor).resolve()),
+					str(Path(AppState.loaded_event_file).resolve())
+				]
 			#print(command)
 			subprocess.Popen(command, shell=True)
 		return _
