@@ -79,7 +79,9 @@ class AppState(object):
 	# 2 = notepad++-like
 	# 3 = vscode-like
 	text_editor_type = 0
-
+	ui_buttons_type = 1
+	ui_metatiles_position = 0
+	
 	def validate_block_size():
 		with open(AppState.loaded_block_file, "rb") as blocks:
 			raw = blocks.read()
@@ -148,6 +150,67 @@ canvas2block_coord = lambda x: int(x//8//4//AppState.scale_factor)
 block2canvas_coord = lambda x: int(x*8*4*AppState.scale_factor)
 canvas2event_coord = lambda x: int(x//8//2//AppState.scale_factor)
 event2canvas_coord = lambda x: int(x*8*2*AppState.scale_factor)
+
+#################################################################################################
+
+# https://stackoverflow.com/a/36221216
+class Tooltip(object):
+	"""
+	gives a Tkinter widget a tooltip as the mouse is above the widget
+	tested with Python27 and Python34  by  vegaseat  09sep2014
+	www.daniweb.com/programming/software-development/code/484591/a-tooltip-class-for-tkinter
+
+	Modified to include a delay time by Victor Zaccardo, 25mar16
+	"""
+	def __init__(self, widget, text='widget info'):
+		self.waittime = 500     #miliseconds
+		self.wraplength = 180   #pixels
+		self.widget = widget
+		self.text = text
+		self.widget.bind("<Enter>", self.enter)
+		self.widget.bind("<Leave>", self.leave)
+		self.widget.bind("<ButtonPress>", self.leave)
+		self.id = None
+		self.tw = None
+
+	def enter(self, event=None):
+		self.schedule()
+
+	def leave(self, event=None):
+		self.unschedule()
+		self.hidetip()
+
+	def schedule(self):
+		self.unschedule()
+		self.id = self.widget.after(self.waittime, self.showtip)
+
+	def unschedule(self):
+		id = self.id
+		self.id = None
+		if id:
+			self.widget.after_cancel(id)
+
+	def showtip(self, event=None):
+		x = y = 0
+		x, y, cx, cy = self.widget.bbox("insert")
+		x += self.widget.winfo_rootx() + 25
+		y += self.widget.winfo_rooty() + 20
+		# creates a toplevel window
+		self.tw = Toplevel(self.widget)
+		# Leaves only the label and removes the app window
+		self.tw.wm_overrideredirect(True)
+		self.tw.wm_geometry("+%d+%d" % (x, y))
+		label = Label(self.tw, text=self.text, justify='left',
+					   background="#ffffff", relief='solid', borderwidth=1,
+					   wraplength = self.wraplength)
+		label.pack(ipadx=1)
+
+	def hidetip(self):
+		tw = self.tw
+		self.tw= None
+		if tw:
+			tw.destroy()
+
 
 #################################################################################################
 
@@ -318,6 +381,8 @@ class App(Tk):
 		super().__init__()
 		self.title("Octomap")
 		
+		self.load_preference_config()
+		
 		# set icon
 		iconphoto = PhotoImage(file=get_relative_to_script(["resources", "octomap.png"]))
 		self.iconphoto(False, iconphoto)
@@ -377,7 +442,8 @@ class App(Tk):
 		self.sbar = Label(self, anchor='w', justify="left", textvariable=self.status, relief=SUNKEN)
 		
 		# button container
-		frm_buttons = ScrollableFrame(self, width=120)
+		if not AppState.ui_buttons_type:
+			frm_buttons = ScrollableFrame(self, width=120)
 		
 		# set styles
 		s = Style()
@@ -395,10 +461,22 @@ class App(Tk):
 			"save": None,
 			"info": None,
 			"code": None,
+			"wizard": None,
+			
+			"open-map": None,
+			"save-map": None,
+			"refresh-map": None,
+			"open-metatile": None,
+			"open-gfx": None,
+			"open-event": None,
+			"refresh-event": None,
 		}
 		
 		# add pointless logo
 		if __DISPLAY_POINTLESS_BITMAPS__:
+			for i in self.icons:
+				self.icons[i] = PhotoImage(file=get_relative_to_script(["resources", "%s.png" % i]))
+			
 			frm_pointless_logo = Frame(self, style="PointlessLogo.TFrame")
 			frm_pointless_logo_centering = Frame(frm_pointless_logo)
 			self.logo = PhotoImage(file=get_relative_to_script(["resources", "octomap_header.png"]))
@@ -408,61 +486,136 @@ class App(Tk):
 			lbl_logo.grid(row=0, column=0, sticky="ew")
 			frm_pointless_logo_centering.pack(side=TOP, fill=Y)
 			frm_pointless_logo.pack(side=TOP, fill=X)
+		
+		# create toolbar
+		if AppState.ui_buttons_type:
+			frm_toolbar = Frame(self)
 			
-			for i in self.icons:
-				self.icons[i] = PhotoImage(file=get_relative_to_script(["resources", "%s.png" % i]))
+			btn_guess_settings = Button(frm_toolbar, image=self.icons["wizard"], text="Guess project", style="Toolbutton", command=self.guess_settings)
+			btn_guess_settings.pack(side=LEFT, padx=2, pady=2)
+			Tooltip(btn_guess_settings, text="Guess settings")
+			
+			btn_open_settings = Button(frm_toolbar, image=self.icons["open"], text="Open project", style="Toolbutton", command=self.load_settings)
+			btn_open_settings.pack(side=LEFT, padx=2, pady=2)
+			Tooltip(btn_open_settings, text="Open settings")
+			
+			btn_save_settings = Button(frm_toolbar, image=self.icons["save"], text="Save project", style="Toolbutton", command=self.save_settings)
+			btn_save_settings.pack(side=LEFT, padx=2, pady=2)
+			Tooltip(btn_save_settings, text="Save settings")
+			
+			tbb_sep0 = Separator(frm_toolbar, orient='vertical')
+			tbb_sep0.pack(side=LEFT, padx=2, pady=2, fill=Y)
+			
+			btn_open_block = Button(frm_toolbar, image=self.icons["open-map"], text="Open blox", style="Toolbutton", command=self.open_block)
+			btn_open_block.pack(side=LEFT, padx=2, pady=2)
+			Tooltip(btn_open_block, text="Open map blocks")
+			
+			self.btn_reload_block = Button(frm_toolbar, image=self.icons["refresh-map"], text="Reload blox", style="Toolbutton", state="disabled", command=self.reload_blocks)
+			self.btn_reload_block.pack(side=LEFT, padx=2, pady=2)
+			Tooltip(self.btn_reload_block, text="Reload map blocks")
+			
+			self.btn_save_block = Button(frm_toolbar, image=self.icons["save-map"], text="Save blox", style="Toolbutton", state="disabled", command=self.save_block_as)
+			self.btn_save_block.pack(side=LEFT, padx=2, pady=2)
+			Tooltip(self.btn_save_block, text="Save map blocks as")
+			
+			tbb_sep1 = Separator(frm_toolbar, orient='vertical')
+			tbb_sep1.pack(side=LEFT, padx=2, pady=2, fill=Y)
+			
+			btn_open_metatiles = Button(frm_toolbar, image=self.icons["open-metatile"], text="Open meta", style="Toolbutton", command=self.open_meta)
+			btn_open_metatiles.pack(side=LEFT, padx=2, pady=2)
+			Tooltip(btn_open_metatiles, text="Open metatiles")
+			
+			tbb_sep2 = Separator(frm_toolbar, orient='vertical')
+			tbb_sep2.pack(side=LEFT, padx=2, pady=2, fill=Y)
+			
+			btn_open_tiles = Button(frm_toolbar, image=self.icons["open-gfx"], text="Open tset", style="Toolbutton", command=self.open_tile)
+			btn_open_tiles.pack(side=LEFT, padx=2, pady=2)
+			Tooltip(btn_open_tiles, text="Open tileset")
+			
+			tbb_sep3 = Separator(frm_toolbar, orient='vertical')
+			tbb_sep3.pack(side=LEFT, padx=2, pady=2, fill=Y)
+			
+			btn_open_events = Button(frm_toolbar, image=self.icons["open-event"], text="Open evs.", style="Toolbutton",  command=self.open_event)
+			btn_open_events.pack(side=LEFT, padx=2, pady=2)
+			Tooltip(btn_open_events, text="Open map events")
+			
+			self.btn_reload_events = Button(frm_toolbar, image=self.icons["refresh-event"], text="Reload evs.", style="Toolbutton", state="disabled", command=self.reload_events)
+			self.btn_reload_events.pack(side=LEFT, padx=2, pady=2)
+			Tooltip(self.btn_reload_events, text="Reload map events")
+			
+			self.btn_look_events = Button(frm_toolbar, image=self.icons["info"], text="Code", style="Toolbutton", state="disabled", command=self.see_code)
+			self.btn_look_events.pack(side=LEFT, padx=2, pady=2)
+			Tooltip(self.btn_look_events, text="View overall map event code")
+			
+			self.btn_editor_events = Button(frm_toolbar, image=self.icons["code"], text="Editor", style="Toolbutton", state="disabled", command=self.editor_events)
+			self.btn_editor_events.pack(side=LEFT, padx=2, pady=2)
+			Tooltip(self.btn_editor_events, text="Open event file in editor")
+			
+			tbb_sep4 = Separator(frm_toolbar, orient='vertical')
+			tbb_sep4.pack(side=LEFT, padx=2, pady=2, fill=Y)
+			
+			btn_update = Button(frm_toolbar, image=self.icons["refresh"], text="Reload All", style="Toolbutton", command=self.update_all)
+			btn_update.pack(side=LEFT, padx=2, pady=2)
+			Tooltip(btn_update, text="Reload all")
+			
+			frm_toolbar.pack(side=TOP, fill=X)
 		
 		# compose the UI
 		self.frm_map_area = MapView(self)
 		self.frm_map_palette = MapPalette(self)
 		self.sbar.pack(side=BOTTOM, fill=X, padx=5, pady=5)
-		frm_buttons.pack(side=LEFT, fill=Y, padx=5)
-		self.frm_map_area.pack(side=LEFT, fill=BOTH, expand=1)
-		self.frm_map_palette.pack(side=LEFT, fill=Y, padx=5)
+		if not AppState.ui_buttons_type:
+			frm_buttons.pack(side=LEFT, fill=Y, padx=5)
+		if AppState.ui_metatiles_position:
+			self.frm_map_area.pack(side=LEFT, fill=BOTH, expand=1)
+			self.frm_map_palette.pack(side=LEFT, fill=Y, padx=5)
+		else:
+			self.frm_map_palette.pack(side=LEFT, fill=Y, padx=5)
+			self.frm_map_area.pack(side=LEFT, fill=BOTH, expand=1)
 		
 		# compose LHS buttons menu
-		lbl_block = Labelframe(frm_buttons.frame, text="Blocks")
-		btn_open_block = Button(lbl_block, text="Open", image=self.icons["open"], compound="left", command=self.open_block)
-		self.btn_reload_block = Button(lbl_block, text="Reload", image=self.icons["refresh"], compound="left", command=self.reload_blocks, state="disabled")
-		self.btn_save_block = Button(lbl_block, text="Save As", image=self.icons["save"], compound="left", command=self.save_block_as, state="disabled")
-		
-		lbl_block.grid(row=0, column=0, sticky="ew", padx=5, pady=5)
-		btn_open_block.grid(row=1, column=0, sticky="ew", padx=0, pady=5)
-		self.btn_reload_block.grid(row=2, column=0, sticky="ew", padx=0, pady=5)
-		self.btn_save_block.grid(row=3, column=0, sticky="ew", padx=0, pady=5)
-		
-		lbl_metatiles = Labelframe(frm_buttons.frame, text="Metatiles")
-		btn_open_metatiles = Button(lbl_metatiles, text="Open", image=self.icons["open"], compound="left", command=self.open_meta)
-		
-		lbl_metatiles.grid(row=4, column=0, sticky="ew", padx=5, pady=5)
-		btn_open_metatiles.grid(row=5, column=0, sticky="ew", padx=0, pady=5)
-		
-		lbl_tiles = Labelframe(frm_buttons.frame, text="GFX")
-		btn_open_tiles = Button(lbl_tiles, text="Open", image=self.icons["open"], compound="left",  command=self.open_tile)
-		
-		lbl_tiles.grid(row=6, column=0, sticky="ew", padx=5, pady=5)
-		btn_open_tiles.grid(row=7, column=0, sticky="ew", padx=0, pady=5)
-		
-		lbl_events = Labelframe(frm_buttons.frame, text="Events")
-		btn_open_events = Button(lbl_events, text="Open", image=self.icons["open"], compound="left",  command=self.open_event)
-		self.btn_look_events = Button(lbl_events, text="See Code", image=self.icons["info"], compound="left", command=self.see_code, state="disabled")
-		self.btn_reload_events = Button(lbl_events, text="Reload", image=self.icons["refresh"], compound="left", command=self.reload_events, state="disabled")
-		self.btn_editor_events = Button(lbl_events, text="Open in Editor", image=self.icons["code"], compound="left", command=self.editor_events, state="disabled")
-		
-		lbl_events.grid(row=8, column=0, sticky="ew", padx=5, pady=5)
-		btn_open_events.grid(row=9, column=0, sticky="ew", padx=0, pady=5)
-		self.btn_reload_events.grid(row=10, column=0, sticky="ew", padx=0, pady=5)
-		self.btn_look_events.grid(row=11, column=0, sticky="ew", padx=0, pady=5)
-		self.btn_editor_events.grid(row=12, column=0, sticky="ew", padx=0, pady=5)
-		
-		lbl_edit = Label(frm_buttons.frame, text="")
-		btn_update = Button(frm_buttons.frame, text="Reload All", image=self.icons["refresh"], compound="left", command=self.update_all)
-		
-		lbl_edit.grid(row=13, column=0, sticky="ew", padx=0, pady=5)
-		btn_update.grid(row=15, column=0, sticky="ew", padx=0, pady=5)
+		if not AppState.ui_buttons_type:
+			lbl_block = Labelframe(frm_buttons.frame, text="Blocks")
+			btn_open_block = Button(lbl_block, text="Open", image=self.icons["open"], compound="left", command=self.open_block)
+			self.btn_reload_block = Button(lbl_block, text="Reload", image=self.icons["refresh"], compound="left", command=self.reload_blocks, state="disabled")
+			self.btn_save_block = Button(lbl_block, text="Save As", image=self.icons["save"], compound="left", command=self.save_block_as, state="disabled")
+			
+			lbl_block.grid(row=0, column=0, sticky="ew", padx=5, pady=5)
+			btn_open_block.grid(row=1, column=0, sticky="ew", padx=0, pady=5)
+			self.btn_reload_block.grid(row=2, column=0, sticky="ew", padx=0, pady=5)
+			self.btn_save_block.grid(row=3, column=0, sticky="ew", padx=0, pady=5)
+			
+			lbl_metatiles = Labelframe(frm_buttons.frame, text="Metatiles")
+			btn_open_metatiles = Button(lbl_metatiles, text="Open", image=self.icons["open"], compound="left", command=self.open_meta)
+			
+			lbl_metatiles.grid(row=4, column=0, sticky="ew", padx=5, pady=5)
+			btn_open_metatiles.grid(row=5, column=0, sticky="ew", padx=0, pady=5)
+			
+			lbl_tiles = Labelframe(frm_buttons.frame, text="GFX")
+			btn_open_tiles = Button(lbl_tiles, text="Open", image=self.icons["open"], compound="left",  command=self.open_tile)
+			
+			lbl_tiles.grid(row=6, column=0, sticky="ew", padx=5, pady=5)
+			btn_open_tiles.grid(row=7, column=0, sticky="ew", padx=0, pady=5)
+			
+			lbl_events = Labelframe(frm_buttons.frame, text="Events")
+			btn_open_events = Button(lbl_events, text="Open", image=self.icons["open"], compound="left",  command=self.open_event)
+			self.btn_look_events = Button(lbl_events, text="See Code", image=self.icons["info"], compound="left", command=self.see_code, state="disabled")
+			self.btn_reload_events = Button(lbl_events, text="Reload", image=self.icons["refresh"], compound="left", command=self.reload_events, state="disabled")
+			self.btn_editor_events = Button(lbl_events, text="Open in Editor", image=self.icons["code"], compound="left", command=self.editor_events, state="disabled")
+			
+			lbl_events.grid(row=8, column=0, sticky="ew", padx=5, pady=5)
+			btn_open_events.grid(row=9, column=0, sticky="ew", padx=0, pady=5)
+			self.btn_reload_events.grid(row=10, column=0, sticky="ew", padx=0, pady=5)
+			self.btn_look_events.grid(row=11, column=0, sticky="ew", padx=0, pady=5)
+			self.btn_editor_events.grid(row=12, column=0, sticky="ew", padx=0, pady=5)
+			
+			lbl_edit = Label(frm_buttons.frame, text="")
+			btn_update = Button(frm_buttons.frame, text="Reload All", image=self.icons["refresh"], compound="left", command=self.update_all)
+			
+			lbl_edit.grid(row=13, column=0, sticky="ew", padx=0, pady=5)
+			btn_update.grid(row=15, column=0, sticky="ew", padx=0, pady=5)
 		
 		self.check_params()
-		self.load_preference_config()
 		
 		# load settings if specified
 		if len(sys.argv) > 1:
@@ -492,6 +645,7 @@ class App(Tk):
 	
 	def load_preference_config(self):
 		if Path(__CONFIG__).is_file():
+		
 			cfg = ConfigParser()
 			cfg.read(__CONFIG__)
 			cfg_p = cfg["Settings"]
@@ -509,6 +663,12 @@ class App(Tk):
 					AppState.text_editor_type = 0
 				else:
 					AppState.text_editor_type = i
+			
+			if cfg_p.get("ui_buttons_type", None):
+					AppState.ui_buttons_type = int(cfg_p["ui_buttons_type"])
+			
+			if cfg_p.get("ui_metatiles_position", None):
+					AppState.ui_metatiles_position = int(cfg_p["ui_metatiles_position"])
 	
 	def load_settings_from_file(self, filepath):
 		cfg = ConfigParser()
@@ -922,32 +1082,40 @@ class PreferencesScreen(Toplevel):
 		self.columnconfigure(1, weight=3)
 		self.grab_set()
 		
-		#TextEditorType
+		root = Frame(self, padding="10 10 12 12")
+		tabs = Notebook(root)
 		
-		frame = Frame(self, padding="10 10 12 12")
-		frame.grid(column=0, row=0, sticky="news")
+		frm_main = Frame(tabs, padding="10 10 12 12")
+		frm_ui = Frame(tabs, padding="10 10 12 12")
+		tabs.add(frm_main, text="Behavior")
+		tabs.add(frm_ui, text="User interface")
 		
+		tabs.grid(column=0, row=0, sticky="news", columnspan=2)
+		
+		root.grid(column=0, row=0, sticky="news")
+		
+		# Behavior settings
 		auto_row = 0
 		
 		self.text_editor = StringVar()
 		self.text_editor.set(AppState.text_editor)
-		lbl_editor = Label(frame, text="Text editor", anchor="e")
-		ety_editor = Entry(frame,textvariable=self.text_editor, width=56)
-		btn_load = Button(frame, text="Open\u2026", width=6, command=self.open_executable)
+		lbl_editor = Label(frm_main, text="Text editor", anchor="e")
+		ety_editor = Entry(frm_main,textvariable=self.text_editor, width=56)
+		btn_load = Button(frm_main, text="Open\u2026", width=6, command=self.open_executable)
 		lbl_editor.grid(column=0, row=auto_row, pady=8, padx=4, sticky="we")
 		ety_editor.grid(column=1, row=auto_row, sticky="we", padx=4)
 		btn_load.grid(column=2, row=auto_row, sticky="we")
 		
 		auto_row += 1
 		
-		lbl_editor_type = Label(frame, text="Instant line-jump command:", anchor="e")
+		lbl_editor_type = Label(frm_main, text="Instant line-jump command:", anchor="e")
 		lbl_editor_type.grid(column=0, row=auto_row, padx=4, sticky="we")
 		
 		self.editor_type = IntVar()
 		self.editor_type.set(AppState.text_editor_type)
 		
 		for edtype in TextEditorType:
-			rbt = Radiobutton(frame, text=edtype.value["description"], value=edtype.value["number"], variable=self.editor_type)
+			rbt = Radiobutton(frm_main, text=edtype.value["description"], value=edtype.value["number"], variable=self.editor_type)
 			rbt.grid(column=1, row=auto_row, sticky="we", padx=4)
 			auto_row += 1
 		
@@ -956,23 +1124,51 @@ class PreferencesScreen(Toplevel):
 		
 		self.old_scale_factor = AppState.scale_factor
 		
-		lbl_scale_factor = Label(frame, text="Scale factor", anchor="e")
-		sbx_scale_factor = Spinbox(frame, from_=1, to=30, width=56, textvariable=self.scale_factor)
+		lbl_scale_factor = Label(frm_main, text="Scale factor", anchor="e")
+		sbx_scale_factor = Spinbox(frm_main, from_=1, to=30, width=56, textvariable=self.scale_factor)
 		lbl_scale_factor.grid(column=0, row=auto_row, pady=8, padx=4, sticky="we")
 		sbx_scale_factor.grid(column=1, row=auto_row, sticky="we", columnspan=2, padx=4)
 		
-		auto_row += 1
+		# UI settings
+		auto_row = 0
 		
-		sep = Separator(frame, orient="horizontal")
+		lbl_use_toolbar = Label(frm_ui, text="Show controls...", anchor="e")
+		lbl_use_toolbar.grid(column=0, row=auto_row, padx=4, sticky="we")
 		
-		sep.grid(column=0, row=auto_row, columnspan=3, sticky="we", pady=4)
+		self.ui_buttons_type = IntVar()
+		self.ui_buttons_type.set(AppState.ui_buttons_type)
+		self.old_ui_buttons_type = AppState.ui_buttons_type
 		
-		auto_row += 1
+		for option in [
+			(0, "on the left hand side"),
+			(1, "as a toolbar")
+		]:
+			rbt = Radiobutton(frm_ui, text=option[1], value=option[0], variable=self.ui_buttons_type)
+			rbt.grid(column=1, row=auto_row, sticky="we", padx=4)
+			auto_row += 1
 		
-		btn_cancel = Button(frame, text="Cancel", width=6, command=self.destroy)
-		btn_ok = Button(frame, text="OK", width=4, command=self.apply_settings)
-		btn_cancel.grid(column=1, row=auto_row, sticky="e", padx=4)
-		btn_ok.grid(column=2, row=auto_row, sticky="we")
+		lbl_metatiles_side = Label(frm_ui, text="Show metatiles on the...", anchor="e")
+		lbl_metatiles_side.grid(column=0, row=auto_row, padx=4, sticky="we")
+		
+		self.ui_metatiles_position = IntVar()
+		self.ui_metatiles_position.set(AppState.ui_metatiles_position)
+		self.old_ui_metatiles_position = AppState.ui_metatiles_position
+		
+		for option in [
+			(0, "left hand side"),
+			(1, "right hand side")
+		]:
+			rbt = Radiobutton(frm_ui, text=option[1], value=option[0], variable=self.ui_metatiles_position)
+			rbt.grid(column=1, row=auto_row, sticky="we", padx=4)
+			auto_row += 1
+		
+		# OK and Cancel
+		action_contain = Frame(root)
+		btn_cancel = Button(action_contain, text="Cancel", width=6, command=self.destroy)
+		btn_ok = Button(action_contain, text="OK", width=4, command=self.apply_settings)
+		btn_cancel.grid(column=0, row=0, sticky="e", padx=4)
+		btn_ok.grid(column=1, row=0, sticky="we")
+		action_contain.grid(column=1, row=1, sticky="e", pady=8)
 
 	def open_executable(self):
 		filepath = askopenfilename(
@@ -990,16 +1186,23 @@ class PreferencesScreen(Toplevel):
 		cfg["Settings"] = {
 			"editor": self.text_editor.get(),
 			"scale_factor": self.scale_factor.get(),
-			"editor_type": self.editor_type.get()
+			"editor_type": self.editor_type.get(),
+			"ui_buttons_type": self.ui_buttons_type.get(),
+			"ui_metatiles_position": self.ui_metatiles_position.get()
 		}
 		
 		# reflect on live app
 		AppState.text_editor = self.text_editor.get()
 		AppState.scale_factor = int(self.scale_factor.get())
 		AppState.text_editor_type = int(self.editor_type.get())
+		AppState.ui_buttons_type = int(self.ui_buttons_type.get())
+		AppState.ui_metatiles_position = int(self.ui_metatiles_position.get())
 		
 		if self.old_scale_factor != AppState.scale_factor:
 			showinfo("Warning", "Scale factor is changed, click on Reload All\nto apply the new scaling.")
+		
+		if (self.old_ui_metatiles_position != AppState.ui_metatiles_position) or (self.old_ui_buttons_type != AppState.ui_buttons_type):
+			showinfo("Warning", "UI preferences have changed, restart the program to see your changes.")
 		
 		with open (__CONFIG__, "w") as octomap_cfg:
 			cfg.write(octomap_cfg)
