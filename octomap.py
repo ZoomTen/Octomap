@@ -12,13 +12,13 @@ from pathlib import Path
 from configparser import ConfigParser
 from enum import Enum
 
-__VERSION__ = "0.0.3"
 def get_relative_to_script(path_as_list):
 	return os.path.join(
 		os.path.realpath(os.path.dirname(__file__)),
 		*path_as_list
 	)
 
+__VERSION__ = "0.0.4"
 
 __DISPLAY_POINTLESS_BITMAPS__ = True
 
