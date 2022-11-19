@@ -13,13 +13,16 @@ from configparser import ConfigParser
 from enum import Enum
 
 __VERSION__ = "0.0.3"
+def get_relative_to_script(path_as_list):
+	return os.path.join(
+		os.path.realpath(os.path.dirname(__file__)),
+		*path_as_list
+	)
+
 
 __DISPLAY_POINTLESS_BITMAPS__ = True
 
-__CONFIG__ = os.path.join(
-	os.path.realpath(os.path.dirname(__file__)),
-	"octomap.ini"
-)
+__CONFIG__ = get_relative_to_script(["octomap.ini"])
 
 class TextEditorType(Enum):
 	none = {
@@ -316,10 +319,7 @@ class App(Tk):
 		self.title("Octomap")
 		
 		# set icon
-		iconphoto = PhotoImage(file=os.path.join(
-			os.path.realpath(os.path.dirname(__file__)),
-			"octomap.png"
-		))
+		iconphoto = PhotoImage(file=get_relative_to_script(["resources", "octomap.png"]))
 		self.iconphoto(False, iconphoto)
 		
 		# menu bar
@@ -393,10 +393,7 @@ class App(Tk):
 		if __DISPLAY_POINTLESS_BITMAPS__:
 			frm_pointless_logo = Frame(self, style="PointlessLogo.TFrame")
 			frm_pointless_logo_centering = Frame(frm_pointless_logo)
-			self.logo = PhotoImage(file=os.path.join(
-				os.path.realpath(os.path.dirname(__file__)),
-				"octomap_header.png"
-			))
+			self.logo = PhotoImage(file=get_relative_to_script(["resources", "octomap_header.png"]))
 			s.configure("PointlessLogo.TFrame", background="black", padding=0)
 			s.configure("PointlessLogo.TLabel", background="black")
 			lbl_logo = Label(frm_pointless_logo_centering, image=self.logo, style="PointlessLogo.TLabel")
@@ -827,10 +824,7 @@ class AboutScreen(Toplevel):
 		s.configure("AboutScreen.TLabel", padding=2)
 		
 		if __DISPLAY_POINTLESS_BITMAPS__:
-			self.image = PhotoImage(file=os.path.join(
-				os.path.realpath(os.path.dirname(__file__)),
-				"octomap_about.png"
-			))
+			self.image = PhotoImage(file=get_relative_to_script(["resources", "octomap_about.png"]))
 			label_image = Label(self, image=self.image, style="AboutScreen.TLabel")
 			label_image.grid(row=1, column=1)
 		text = """
