@@ -1339,7 +1339,7 @@ class GuessSettings(Toplevel):
 				values = []
 				for i in self.all_dirs["block"].glob("*.blk"):
 					values.append(i.stem)
-				self.cbx_map["values"] = tuple(values)
+				self.cbx_map["values"] = tuple(sorted(values))
 				
 				# find metatiles
 				self.cbx_metatile.configure(state="readonly") # enable cbx
