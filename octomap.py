@@ -506,30 +506,30 @@ class App(Tk):
 		cfg.read(filepath)
 		cfg_p = cfg["Octomap Project"]
 		
+		AppState.loaded_block_file = None
 		if cfg_p.get("blocks", None):
-			AppState.loaded_block_file = cfg_p["blocks"]
-		else:
-			AppState.loaded_block_file = None
+			if Path(cfg_p["blocks"]).is_file():
+				AppState.loaded_block_file = cfg_p["blocks"]
 		
 		AppState.block_size = (
-			int(cfg_p["mapsize_w"]),
-			int(cfg_p["mapsize_h"])
+			int(cfg_p.get("mapsize_w", 0)),
+			int(cfg_p.get("mapsize_h", 0))
 		)
 		
+		AppState.loaded_metatile_file = None
 		if cfg_p.get("metatiles", None):
-			AppState.loaded_metatile_file = cfg_p["metatiles"]
-		else:
-			AppState.loaded_metatile_file = None
+			if Path(cfg_p["metatiles"]).is_file():
+				AppState.loaded_metatile_file = cfg_p["metatiles"]
 		
+		AppState.loaded_tile_file = None
 		if cfg_p.get("tiles", None):
-			AppState.loaded_tile_file = cfg_p["tiles"]
-		else:
-			AppState.loaded_tile_file = None
+			if Path(cfg_p["tiles"]).is_file():
+				AppState.loaded_tile_file = cfg_p["tiles"]
 		
+		AppState.loaded_event_file = None
 		if cfg_p.get("events", None):
-			AppState.loaded_event_file = cfg_p["events"]
-		else:
-			AppState.loaded_event_file = None
+			if Path(cfg_p["events"]).is_file():
+				AppState.loaded_event_file = cfg_p["events"]
 		
 		self.check_params()
 	
