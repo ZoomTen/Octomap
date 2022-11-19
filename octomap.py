@@ -483,6 +483,7 @@ class App(Tk):
 	
 	def load_settings(self):
 		filepath = askopenfilename(
+			title="Open settings file...",
 			filetypes=[("Settings file", "*.ini"), ("All Files", "*.*")]
 		)
 		if not filepath:
@@ -543,6 +544,7 @@ class App(Tk):
 	
 	def save_settings(self):
 		filepath = asksaveasfilename(
+			title="Save settings to...",
 			filetypes=[("Settings file", "*.ini"), ("All Files", "*.*")]
 		)
 		if not filepath:
@@ -683,6 +685,7 @@ support Sublime Text-styled command line syntax)
 
 	def open_block(self):
 		filepath = askopenfilename(
+			title="Open map blocks...",
 			filetypes=[("Blocks", "*.blk"), ("All Files", "*.*")]
 		)
 		if not filepath:
@@ -702,6 +705,7 @@ support Sublime Text-styled command line syntax)
 			)
 			return
 		filepath = asksaveasfilename(
+			title="Save map blocks to...",
 			filetypes=[("Blocks", "*.blk"), ("All Files", "*.*")]
 		)
 		if not filepath:
@@ -713,6 +717,7 @@ support Sublime Text-styled command line syntax)
 
 	def open_meta(self):
 		filepath = askopenfilename(
+			title="Open metatiles...",
 			filetypes=[("Metatiles", "*.bin"), ("All Files", "*.*")]
 		)
 		if not filepath:
@@ -723,6 +728,7 @@ support Sublime Text-styled command line syntax)
 
 	def open_tile(self):
 		filepath = askopenfilename(
+			title="Open tileset...",
 			filetypes=[("Images", "*.png"), ("All Files", "*.*")]
 		)
 		if not filepath:
@@ -733,6 +739,7 @@ support Sublime Text-styled command line syntax)
 
 	def open_event(self):
 		filepath = askopenfilename(
+			title="Open event file...",
 			filetypes=[("Map code", "*.asm"), ("All Files", "*.*")]
 		)
 		if not filepath:
@@ -969,6 +976,7 @@ class PreferencesScreen(Toplevel):
 
 	def open_executable(self):
 		filepath = askopenfilename(
+			title="Use which app as the text editor?",
 			filetypes=[("Executables", "*.exe"), ("All Files", "*.*")]
 		)
 		if not filepath:
