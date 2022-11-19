@@ -1119,16 +1119,6 @@ class PreferencesScreen(Toplevel):
 			rbt.grid(column=1, row=auto_row, sticky="we", padx=4)
 			auto_row += 1
 		
-		self.scale_factor = IntVar()
-		self.scale_factor.set(AppState.scale_factor)
-		
-		self.old_scale_factor = AppState.scale_factor
-		
-		lbl_scale_factor = Label(frm_main, text="Scale factor", anchor="e")
-		sbx_scale_factor = Spinbox(frm_main, from_=1, to=30, width=56, textvariable=self.scale_factor)
-		lbl_scale_factor.grid(column=0, row=auto_row, pady=8, padx=4, sticky="we")
-		sbx_scale_factor.grid(column=1, row=auto_row, sticky="we", columnspan=2, padx=4)
-		
 		# UI settings
 		auto_row = 0
 		
@@ -1161,6 +1151,16 @@ class PreferencesScreen(Toplevel):
 			rbt = Radiobutton(frm_ui, text=option[1], value=option[0], variable=self.ui_metatiles_position)
 			rbt.grid(column=1, row=auto_row, sticky="we", padx=4)
 			auto_row += 1
+		
+		self.scale_factor = IntVar()
+		self.scale_factor.set(AppState.scale_factor)
+		
+		self.old_scale_factor = AppState.scale_factor
+		
+		lbl_scale_factor = Label(frm_ui, text="Scale factor", anchor="e")
+		sbx_scale_factor = Spinbox(frm_ui, from_=1, to=30, width=56, textvariable=self.scale_factor)
+		lbl_scale_factor.grid(column=0, row=auto_row, pady=8, padx=4, sticky="we")
+		sbx_scale_factor.grid(column=1, row=auto_row, sticky="we", columnspan=2, padx=4)
 		
 		# OK and Cancel
 		action_contain = Frame(root)
