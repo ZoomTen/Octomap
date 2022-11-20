@@ -13,10 +13,16 @@ from configparser import ConfigParser
 from enum import Enum
 
 def get_relative_to_script(path_as_list):
-	return os.path.join(
-		os.path.realpath(os.path.dirname(__file__)),
-		*path_as_list
-	)
+	try:
+		return os.path.join(
+			os.path.realpath(os.path.dirname(__file__)),
+			*path_as_list
+		)
+	except NameError:
+		return os.path.join(
+			os.path.realpath(os.path.dirname(sys.argv[0])),
+			*path_as_list
+		)
 
 __VERSION__ = "0.0.4"
 
@@ -450,7 +456,8 @@ class App(Tk):
 		
 		# set arial font on windows
 		if self.tk.call("tk", "windowingsystem") == "win32":
-			s.configure(".", font=("Arial", "9"))
+			#s.configure(".", font=("Arial", "9"))
+			pass
 		else:
 			# set theme outside windows
 			s.theme_use("clam")
