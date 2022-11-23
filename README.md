@@ -14,8 +14,9 @@ It also just so happens to double as a &ldquo;&ldquo;functioning&rdquo;&rdquo; m
 * Load path guessing (that doesn't assume Makefiles... idk)
 * Built-in help... kinda.
 * Easily runs on most systems...? I guess?
-* Supports both old-style syntax (`db *` vs `def_*_events`)
+* Supports both old-style and new-style syntax (`db *` vs `def_*_events`)
 * Supports commenting and uncommenting events from the map editor (here, referred to as &ldquo;toggling visibility&rdquo;)
+* *Some* amount of UI customization through Preferences
 
 ## Icons
 
