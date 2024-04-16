@@ -51,7 +51,7 @@ It also just so happens to double as a &ldquo;&ldquo;functioning&rdquo;&rdquo; m
 
 ## Using it on Windows XP
 
-* Ensure you've got a browser that works with the latest HTTPS sites. I recommend the latest compatible version available of the big browsers, or MyPal.
+* Ensure you've got a browser that works with the latest HTTPS sites. I recommend the latest compatible version available of the big browsers, or MyPal, or Supermium.
 * Get Python 3.4.4 (last known XP-compatible version): https://www.python.org/ftp/python/3.4.4/python-3.4.4.msi
 * Get Pillow 3.4.0 for Windows (picked at random, somehow works): https://files.pythonhosted.org/packages/35/b9/92a32a70a97126aa8fecdd7c1be4e0fbb9b77fc5ecddaa00ab39922dc73c/Pillow-3.4.0.win32-py3.4.exe
 * Install Python as usual.
